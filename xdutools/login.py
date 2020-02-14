@@ -48,7 +48,6 @@ class Login:
 
     def get_apps(self):
         res = self.session.get(self.urls['apps'])
-        print(res.text)
         return res.json()['data']
 
     def get_app_id(self, app_name):

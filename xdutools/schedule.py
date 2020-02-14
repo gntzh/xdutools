@@ -23,17 +23,17 @@ class Lesson:
 
     def get_lessons(self, session):
         res = session = session.post(
-            URLS['kb'], data={"XNXQDM": "2019-2020-1"})
+            URLS['kb'], data={"XNXQDM": "2019-2020-2"})
         return map(self.process_lesson, res.json()['datas']['xsllsykb']['rows'])
 
     def process_lesson(self, data):
         return {
             '课程': data['KCM'],
-            '教师': data['SKJS'].replace(',', ' '),
+            '教师': (data['SKJS'] or '未指定').replace(',', ' '),
             '周几': data['SKXQ'],
             '开始节数': data['KSJC'],
             '结束节数':  data['JSJC'],
-            '教室': data['JASDM'],
+            '教室': data['JASMC'],
             '周数': self.process_week(data['ZCMC'])
         }
 

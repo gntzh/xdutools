@@ -7,10 +7,11 @@
 
 ```bash
 // 假设已有python3环境
-mkdir xduapps
-cd xduapps
-git clone git@github.com:ShoorDay/xduapps.git
-// 或者http下载 https://github.com/ShoorDay/xduapps.git
+mkdir xdutools
+cd xdutools
+git clone git@github.com:ShoorDay/xdutools.git
+// 或者[https下载](https://github.com/ShoorDay/xdutools/archive/master.zip)
+
 pip install .
 // 检查
 xdu --help

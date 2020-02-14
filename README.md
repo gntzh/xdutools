@@ -29,9 +29,9 @@ xdu schedule --format=wakeup
 ~~推荐使用Simple课程表~~
 推荐使用WakeUp课程表
 1. 获得schedule-wakeup.csv文件
-![获得schedule-wakeup.csv文件](./xdutools/assets/schedule.png)
+![获得schedule-wakeup.csv文件](./assets/schedule.png)
 文件保存在`setup.py`同级目录
-2. 发送文件到手机
+1. 发送文件到手机
 推荐使用微信/Tim/QQ, `WakeUp课程表`为此做了优化, 容易找到
 3. WakeUp课程表内导入
 - 选择从EXCEL导入, 找到手机上的文件,导入即可

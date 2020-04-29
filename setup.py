@@ -32,6 +32,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        xdu=xdutools.cli:cli
+        xdu=xdutools.cli:main
     ''',
 )

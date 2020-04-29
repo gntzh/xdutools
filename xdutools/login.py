@@ -1,15 +1,19 @@
-import requests
+import json
+from pathlib import Path
+import re
 from lxml.etree import HTML
+import requests
 
 
 class Login:
     urls = {
         'ids': 'http://ids.xidian.edu.cn/authserver/login',
         'apps': 'http://ehall.xidian.edu.cn/jsonp/getUserAllUsableApp',
-        'app': 'http://ehall.xidian.edu.cn//appShow'
+        'app': 'http://ehall.xidian.edu.cn//appShow',
+        'test': 'http://ids.xidian.edu.cn/authserver/userAttributesEdit.do',
     }
 
-    def __init__(self, username, password):
+    def __init__(self, username=None, password=None, cookies=None):
         self.username = username
         self.password = password
         self._session = requests.Session()
@@ -18,6 +22,8 @@ class Login:
             'Accept-Encoding': 'gzip, deflate',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'
         })
+        if cookies:
+            self.session.cookies.update(cookies)
 
     @property
     def session(self):
@@ -42,23 +48,37 @@ class Login:
         res = self.session.post(
             'http://ids.xidian.edu.cn/authserver/login', data=form_data)
         if res.status_code == 200:
-            html = HTML(res.text)
-            return True
-        return False
-
-    def get_apps(self):
+            return self.status
+    
+    @property
+    def apps(self):
         res = self.session.get(self.urls['apps'])
         return res.json()['data']
 
-    def get_app_id(self, app_name):
-        apps = self.get_apps()
-        app_id = [i for i in apps if i['appName'] == app_name][0]['appId']
-        return app_id
-
     def request_app(self, app_name):
-        res = self.session.get(self.urls['app'], params={
-                               'appId': self.get_app_id(app_name)})
+        for i in self.apps:
+            if i['appName'] == app_name:
+                app_id = i['appId']
+                res = self.session.get(self.urls['app'], params={'appId': app_id})
+                break
+
+    @property
+    def status(self):
+        res = self.session.get(self.urls['test'], allow_redirects=False)
+        if res.status_code == 200 and (m := re.search(r'userId=(?P<username>\d{11})"', res.text, re.S)) is not None:
+            return m.group('username')
 
     @property
     def cookies(self):
         return self.session.cookies
+
+    def save_cookies(self):
+        path = Path.home() / '.xdutools'
+        path.mkdir(exist_ok=True)
+        (path / 'cookies.json').write_text(json.dumps(self.session.cookies.get_dict()))
+
+    @classmethod
+    def by_cookies(cls):
+        cookies = Path.home() / '.xdutools'/'cookies.json'
+        cookies.touch()
+        return cls(cookies=json.loads(cookies.read_text()))

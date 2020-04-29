@@ -131,6 +131,7 @@ dmypy.json
 # vs cdoe
 .vscode/
 
-# data
-*txt
-*csv
+# output
+*.txt
+*.csv
+*.json

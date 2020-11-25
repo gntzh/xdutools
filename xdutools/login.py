@@ -64,6 +64,7 @@ class Login:
         form_data |= {
             "username": self.username,
             "password": encrypt(key, self.password),
+            "rememberMe": "on",
         }
         res = self.session.post(
             "http://ids.xidian.edu.cn/authserver/login", data=form_data

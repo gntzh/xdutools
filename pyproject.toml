@@ -6,8 +6,9 @@ name = "xdutools"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
+asyncclick = {version = "^7.1.2", optional = true}
 beautifulsoup4 = "^4.9.3"
-click = "^7.1.0"
+click = {version = "^7.1.2", optional = true}
 httpx = "^0.16.1"
 lxml = {version = "^4.6.1", optional = true}
 pycryptodome = "^3.9.9"
@@ -20,7 +21,8 @@ flake8 = "^3.8.4"
 mypy = "^0.790"
 
 [tool.poetry.extras]
-all = ["lxml"]
+all = ["lxml", "asyncclick", "click"]
+cli = ["asyncclick"]
 
 [[tool.poetry.source]]
 default = true

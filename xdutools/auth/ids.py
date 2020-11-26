@@ -14,9 +14,6 @@ if TYPE_CHECKING:
 
     # TODO Client 和 CookiesLike 兼容参数
 
-LOG_IN_URL = "http://ids.xidian.edu.cn/authserver/login"
-STATUS_URL = "http://ids.xidian.edu.cn/authserver/userAttributesEdit.do"
-
 
 def encrypt(key: str, value: str) -> str:
     cipher = AES.new(key.encode(), AES.MODE_CBC, iv=token_urlsafe(12).encode())
@@ -25,7 +22,7 @@ def encrypt(key: str, value: str) -> str:
 
 
 async def get_logged_in_user(client: "AsyncClient") -> Optional[str]:
-    res = await client.get(STATUS_URL)
+    res = await client.get("http://ids.xidian.edu.cn/authserver/userAttributesEdit.do")
     if (
         res.status_code == 200
         and (m := re.search(r'userId=(?P<username>\d{11})"', res.text, re.S))
@@ -45,7 +42,7 @@ async def get_key_and_hidden_fields(client: "AsyncClient" = None) -> tuple[str, 
         "Host": "ids.xidian.edu.cn",
         "Upgrade-Insecure-Requests": "1",
     }
-    res = await client.get(LOG_IN_URL, headers=headers)
+    res = await client.get("http://ids.xidian.edu.cn/authserver/login", headers=headers)
     if flag:
         await client.aclose()
     if res.status_code == 200:
@@ -59,7 +56,7 @@ async def get_key_and_hidden_fields(client: "AsyncClient" = None) -> tuple[str, 
 
 
 async def log_in(
-    username: str, password: str, client: "AsyncClient" = None
+    username: str, password: str, *, service: str = None, client: "AsyncClient" = None
 ) -> "AsyncClient":
     client = client or create_client()
     key, form_data = await get_key_and_hidden_fields(client)
@@ -68,9 +65,21 @@ async def log_in(
         "password": encrypt(key, password),
         "rememberMe": "on",
     }
-    res = await client.post("http://ids.xidian.edu.cn/authserver/login", data=form_data)
+    res = await client.post(
+        "http://ids.xidian.edu.cn/authserver/login",
+        data=form_data,
+        params={"service": service},
+    )
     if res.status_code == 200:
         logged_in_user = await get_logged_in_user(client)
         if logged_in_user and logged_in_user == username:
             return client
     raise Exception
+
+
+async def login_in_service(client: "AsyncClient", *, service: str) -> "AsyncClient":
+    await client.get(
+        "http://ids.xidian.edu.cn/authserver/login",
+        params={"service": service},
+    )
+    return client

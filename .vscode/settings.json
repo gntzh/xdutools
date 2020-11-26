@@ -5,6 +5,8 @@
     "python.formatting.provider": "black",
     "cSpell.words": [
         "aclose",
+        "anyio",
+        "ehall",
         "secho",
         "xdutools",
         "xidian"

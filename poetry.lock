@@ -1,10 +1,53 @@
 [[package]]
+name = "anyio"
+version = "2.0.2"
+description = "High level compatibility layer for multiple asynchronous event loop implementations"
+category = "main"
+optional = true
+python-versions = ">=3.6.2"
+
+[package.dependencies]
+idna = ">=2.8"
+sniffio = ">=1.1"
+
+[package.extras]
+curio = ["curio (>=1.4)"]
+doc = ["sphinx-rtd-theme", "sphinx-autodoc-typehints (>=1.2.0)"]
+test = ["coverage (>=4.5)", "hypothesis (>=4.0)", "pytest (>=4.3)", "trustme", "uvloop"]
+trio = ["trio (>=0.16)"]
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.aliyun.com/pypi/simple"
+reference = "aliyun"
+
+[[package]]
 name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 category = "dev"
 optional = false
 python-versions = "*"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.aliyun.com/pypi/simple"
+reference = "aliyun"
+
+[[package]]
+name = "asyncclick"
+version = "7.1.2.2"
+description = "A simple anyio-compatible fork of Click, for powerful command line utilities."
+category = "main"
+optional = true
+python-versions = ">=3.6"
+
+[package.dependencies]
+anyio = ">=2"
+
+[package.extras]
+dev = ["coverage", "pytest-runner", "pytest-trio", "pytest (>=3)", "sphinx", "tox"]
+docs = ["sphinx"]
 
 [package.source]
 type = "legacy"
@@ -440,15 +483,25 @@ type = "legacy"
 url = "https://mirrors.aliyun.com/pypi/simple"
 reference = "aliyun"
 
+[extras]
+all = ["lxml", "asyncclick"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "6ebc02294d34c3ba794589d3e1fa5cc6944ad2bcbef27e7840ba9ca32ceed3e5"
+content-hash = "83ffe689f7d64cf98461e571e4a588c070fa0b3e1f24c6e9c200002e85375eb7"
 
 [metadata.files]
+anyio = [
+    {file = "anyio-2.0.2-py3-none-any.whl", hash = "sha256:01cce0087b8fd8b6b7e629dc11505dcde02f916ce903332892cb2ae9817b597d"},
+    {file = "anyio-2.0.2.tar.gz", hash = "sha256:35075abd32cf20fd7e0be2fee3614e80b92d5392eba257c8d2f33de3df7ca237"},
+]
 appdirs = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
     {file = "appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41"},
+]
+asyncclick = [
+    {file = "asyncclick-7.1.2.2.tar.gz", hash = "sha256:5af6e60f485caf031b79806c673a248c367a86022ac00367002e7f3c3b5852ba"},
 ]
 beautifulsoup4 = [
     {file = "beautifulsoup4-4.9.3-py2-none-any.whl", hash = "sha256:4c98143716ef1cb40bf7f39a8e3eec8f8b009509e74904ba3a7b315431577e35"},

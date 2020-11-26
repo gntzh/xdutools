@@ -1,52 +1,94 @@
-import click
-from .login import Login
+import asyncclick as click
+from asyncclick.core import Context
+from xdutools.state import COOKIES_PATH, ensure_path
+from httpx import AsyncClient
+
+from xdutools.auth import ids, ehall
+from xdutools.auth import cookies
+from xdutools.auth.utils import create_client
+
+ensure_path()
+click.anyio_backend = "asyncio"
 
 
 @click.group()
-@click.option("--username", "-U", "username", prompt="账号")
 @click.pass_context
-def main(ctx, username):
-    login = Login.by_cookies()
-    if username != login.status:
-        password = click.prompt("密码")
-        login = Login(username, password)
-        login.ids_login()
-    login.save_cookies()
-    # TODO 登录是否成功的检查并没有做
-    click.secho("ids登录成功", fg="green")
+@click.option("--username", "-U", "username", default=None)
+@click.option("--password", "-P", "password", default=None)
+def main(ctx: Context, username: str = None, password: str = None):
     ctx.ensure_object(dict)
-    ctx.obj["login"] = login
+    ctx.obj["username"] = username
+    ctx.obj["password"] = password
 
 
-# TODO 允许选择哪一学期课表 功能
+@main.resultcallback()
+@click.pass_context
+async def shutdown(ctx: Context, *arg, **kw):
+    client: "AsyncClient" = ctx.obj.get("client")
+    if client:
+        cookies.save_cookies_to_file(
+            client.cookies, COOKIES_PATH / ctx.obj.get("username")
+        )
+        await client.aclose()
+
+
+@main.command()
+@click.argument("name", default="world")
+def hello(name):
+    print(f"Hello, {name}!")
+
+
+async def log_in_ids(ctx: Context) -> "AsyncClient":
+    username: str = ctx.obj.get("username") or click.prompt("账号")
+    cookie_path = COOKIES_PATH / username
+    jar = cookies.load_cookies_from_file(cookie_path)
+    client = create_client(cookies=jar)
+    if jar:
+        u = await ids.get_logged_in_user(client)
+        if u == username:
+            return client
+    password: str = ctx.obj.get("password") or click.prompt("密码")
+    await ids.log_in(username, password, client)
+    cookies.save_cookies_to_file(client.cookies, cookie_path)
+    return client
+
+
+async def log_in_ehall(ctx: Context) -> "AsyncClient":
+    username: str = ctx.obj.get("username") or click.prompt("账号")
+    cookie_path = COOKIES_PATH / username
+    jar = cookies.load_cookies_from_file(cookie_path)
+    client = create_client(cookies=jar)
+    if jar:
+        u = await ehall.get_logged_in_user(client)
+        if u == username:
+            ctx.obj["client"] = client
+            return client
+        if u is None:
+            u = await ids.get_logged_in_user(client)
+            if u == username:
+                await ehall.log_in_with_ids(client)
+                ctx.obj["client"] = client
+                return client
+    password: str = ctx.obj.get("password") or click.prompt("密码")
+    await ehall.log_in(username, password, client)
+    ctx.obj["client"] = client
+    return client
+
+
 @main.command()
 @click.option(
     "--format", "-f", type=click.Choice(("simple", "csv", "wakeup")), default="csv"
 )
-@click.pass_obj
-def schedule(obj, format):
-    login = obj["login"]
-    from .schedule import Lesson, APP_NAME
+@click.pass_context
+async def schedule(ctx: Context, format):
+    client = await log_in_ehall(ctx)
+    await ehall.log_in_with_ids(client)
+    from xdutools.auth.ehall import use_app
+    from xdutools.apps.schedule import get_lessons, save_lessons_as_wake_up, E_HALL_ID
 
-    login.request_app(APP_NAME)
-    click.secho("我的课表访问成功", fg="green")
-    lesson = Lesson()
-    lessons = lesson.get_lessons(login.session)
-    click.secho("成功获得课表", fg="green")
-    lesson.save_lessons(lessons, format)
-    click.secho("成功保存课表", fg="green")
+    await use_app(client, E_HALL_ID)
+    save_lessons_as_wake_up(await get_lessons(client))
 
 
-@main.command()
-@click.pass_obj
-def score(obj):
-    login = obj["login"]
-    from .score import APP_NAME, Score
-
-    login.request_app(APP_NAME)
-    click.secho("成绩查询访问成功", fg="green")
-    lesson = Score()
-    lessons = lesson.get_scores(login.session)
-    click.secho("成功获得成绩", fg="green")
-    lesson.save_scores(lessons)
-    click.secho("成功保存成绩", fg="green")
+if __name__ == "__main__":
+    main()

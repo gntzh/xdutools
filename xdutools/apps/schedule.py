@@ -78,9 +78,7 @@ class Lesson(object):
 
 async def get_lessons(client: "AsyncClient") -> list[Lesson]:
     res = await client.post(LESSONS_URL, data={"XNXQDM": "2020-2021-1"})
-    return [
-        Lesson.by_data(i) for i in res.json()["datas"]["xsllsykb"]["rows"]
-    ], res.json()["datas"]["xsllsykb"]["rows"]
+    return [Lesson.by_data(i) for i in res.json()["datas"]["xsllsykb"]["rows"]]
 
 
 def save_lessons_as_wake_up(lessons: list[Lesson]):

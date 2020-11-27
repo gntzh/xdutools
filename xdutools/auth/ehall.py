@@ -36,9 +36,17 @@ async def use_app_by_name(
                 break
 
 
+async def get_logged_in_user(coc: ClientOrCookies) -> Optional[str]:
+    async with ccn2client(coc) as client:
+        res = await client.get("http://ehall.xidian.edu.cn/jsonp/userDesktopInfo.json")
+        if res.status_code == 200 and (data := res.json())["hasLogin"]:
+            return data["userId"]
+        return None
+
+
 async def log_in_with_ids(coc: ClientOrCookiesT) -> ClientOrCookiesT:
     async with ccn2flag(coc) as (client, is_client):
-        await ids.login_in_service(client, service="http://ehall.xidian.edu.cn/login")
+        await ids.log_in_service(client, service="http://ehall.xidian.edu.cn/login")
         if is_client:
             return client  # type:  ignore
         else:
@@ -49,16 +57,12 @@ async def log_in(
     client: AsyncClient = None, *, username: str, password: str
 ) -> AsyncClient:
     client = await ids.log_in(
-        username,
-        password,
+        client,
+        username=username,
+        password=password,
         service="http://ehall.xidian.edu.cn/login",
     )
-    return client
-
-
-async def get_logged_in_user(coc: ClientOrCookies) -> Optional[str]:
-    async with ccn2client(coc) as client:
-        res = await client.get("http://ehall.xidian.edu.cn/jsonp/userDesktopInfo.json")
-        if res.status_code == 200 and (data := res.json())["hasLogin"]:
-            return data["userId"]
-        return None
+    logged_in_user = await get_logged_in_user(client)
+    if logged_in_user == username:
+        return client
+    raise Exception

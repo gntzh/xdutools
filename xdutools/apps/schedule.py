@@ -60,7 +60,7 @@ class Lesson(object):
 
     @classmethod
     def process_week(cls, week_str: str) -> list[int]:
-        rst = []
+        rst: list = []
         for w in week_str.split(","):
             m = re.match(r"(\d+)-(\d+)周\([单双]\)$", w)
             if m:

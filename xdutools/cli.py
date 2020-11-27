@@ -1,3 +1,4 @@
+from typing import Any
 import asyncclick as click
 from asyncclick.core import Context
 from xdutools.state import COOKIES_PATH, ensure_path
@@ -24,7 +25,7 @@ def main(ctx: Context, username: str = None, password: str = None):
 @main.resultcallback()
 @click.pass_context
 async def shutdown(ctx: Context, *arg, **kw):
-    client: "AsyncClient" = ctx.obj.get("client")
+    client: AsyncClient = ctx.obj.get("client")
     if client:
         cookies.save_cookies_to_file(
             client.cookies, COOKIES_PATH / ctx.obj.get("username")
@@ -35,13 +36,21 @@ async def shutdown(ctx: Context, *arg, **kw):
 @main.command()
 @click.argument("name", default="world")
 def hello(name):
-    print(f"Hello, {name}!")
+    click.secho(f"Hello, {name}!", fg="green")
 
 
-async def log_in_ids(ctx: Context) -> "AsyncClient":
-    username: str = ctx.obj.get("username") or click.prompt("账号")
-    cookie_path = COOKIES_PATH / username
-    jar = cookies.load_cookies_from_file(cookie_path)
+@click.pass_context
+def set_value(ctx: Context, *, key: Any, text=None, kw: dict = {}) -> Any:
+    if (value := ctx.obj.get(key)) is None:
+        value = click.prompt(text or key, **kw)
+        ctx.obj[key] = value
+    return value
+
+
+@click.pass_context
+async def log_in_ids(ctx: Context) -> AsyncClient:
+    username: str = set_value(key="username", text="账号")
+    jar = cookies.load_cookies_from_file(COOKIES_PATH / username)
     client = create_client(cookies=jar)
     if jar:
         u = await ids.get_logged_in_user(client)
@@ -49,14 +58,13 @@ async def log_in_ids(ctx: Context) -> "AsyncClient":
             return client
     password: str = ctx.obj.get("password") or click.prompt("密码")
     await ids.log_in(client, username=username, password=password)
-    cookies.save_cookies_to_file(client.cookies, cookie_path)
     return client
 
 
-async def log_in_ehall(ctx: Context) -> "AsyncClient":
-    username: str = ctx.obj.get("username") or click.prompt("账号")
-    cookie_path = COOKIES_PATH / username
-    jar = cookies.load_cookies_from_file(cookie_path)
+@click.pass_context
+async def log_in_ehall(ctx: Context) -> AsyncClient:
+    username: str = set_value(key="username", text="账号")
+    jar = cookies.load_cookies_from_file(COOKIES_PATH / username)
     client = create_client(cookies=jar)
     if jar:
         u = await ehall.get_logged_in_user(client)
@@ -69,7 +77,7 @@ async def log_in_ehall(ctx: Context) -> "AsyncClient":
                 await ehall.log_in_with_ids(client)
                 ctx.obj["client"] = client
                 return client
-    password: str = ctx.obj.get("password") or click.prompt("密码")
+    password: str = set_value(key="password", text="密码")
     await ehall.log_in(client, username=username, password=password)
     ctx.obj["client"] = client
     return client
@@ -81,7 +89,7 @@ async def log_in_ehall(ctx: Context) -> "AsyncClient":
 )
 @click.pass_context
 async def schedule(ctx: Context, format):
-    client = await log_in_ehall(ctx)
+    client = await log_in_ehall()
     from xdutools.auth.ehall import use_app
     from xdutools.apps.schedule import get_lessons, save_lessons_as_wake_up, E_HALL_ID
 

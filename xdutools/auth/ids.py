@@ -57,29 +57,7 @@ async def get_key_and_hidden_fields(con: AsyncClient = None) -> tuple[str, dict]
             raise Exception
 
 
-async def log_in(
-    client: AsyncClient = None, *, username: str, password: str, service: str = None
-) -> AsyncClient:
-    client = client or create_client()
-    key, form_data = await get_key_and_hidden_fields(client)
-    form_data |= {  # type: ignore[operator]
-        "username": username,
-        "password": encrypt(key, password),
-        "rememberMe": "on",
-    }
-    res = await client.post(
-        "http://ids.xidian.edu.cn/authserver/login",
-        data=form_data,
-        params={"service": service},
-    )
-    if res.status_code == 200:
-        logged_in_user = await get_logged_in_user(client)
-        if logged_in_user and logged_in_user == username:
-            return client
-    raise Exception
-
-
-async def login_in_service(coc: ClientOrCookiesT, *, service: str) -> ClientOrCookiesT:
+async def log_in_service(coc: ClientOrCookiesT, *, service: str) -> ClientOrCookiesT:
     client = coc or create_client(cookies=coc)
     async with ccn2flag(coc) as (client, is_client):
         await client.get(
@@ -90,3 +68,32 @@ async def login_in_service(coc: ClientOrCookiesT, *, service: str) -> ClientOrCo
             return client  # type: ignore
         else:
             return client.cookies.jar  # type: ignore
+
+
+async def log_in(
+    client: AsyncClient = None, *, username: str, password: str, service: str = None
+) -> AsyncClient:
+    client = client or create_client()
+    key, form_data = await get_key_and_hidden_fields(client)
+    form_data |= {  # type: ignore[operator]
+        "username": username,
+        "password": encrypt(key, password),
+        # "rememberMe": "on",
+    }
+    res = await client.post(
+        "http://ids.xidian.edu.cn/authserver/login",
+        data=form_data,
+        # params={"service": service},
+    )
+    # FIXME post 重定向到了
+    # ids.xidian.edu.cn/authserver/services/j_spring_cas_security_check
+    if res.status_code == 200:
+        res = await client.get(
+            "http://ids.xidian.edu.cn/authserver/login",
+            params={"service": service},
+        )
+        if res.status_code == 200:
+            logged_in_user = await get_logged_in_user(client)
+            if logged_in_user and logged_in_user == username:
+                return client
+    raise Exception

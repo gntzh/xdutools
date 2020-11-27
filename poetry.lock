@@ -119,7 +119,7 @@ name = "chardet"
 version = "3.0.4"
 description = "Universal encoding detector for Python 2 and 3"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [package.source]
@@ -133,6 +133,19 @@ version = "7.1.2"
 description = "Composable command line interface toolkit"
 category = "main"
 optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[package.source]
+type = "legacy"
+url = "https://mirrors.aliyun.com/pypi/simple"
+reference = "aliyun"
+
+[[package]]
+name = "colorama"
+version = "0.4.4"
+description = "Cross-platform colored terminal text."
+category = "main"
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.source]
@@ -363,7 +376,7 @@ name = "requests"
 version = "2.25.0"
 description = "Python HTTP for Humans."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.dependencies]
@@ -470,7 +483,7 @@ name = "urllib3"
 version = "1.26.2"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 
 [package.extras]
@@ -484,12 +497,14 @@ url = "https://mirrors.aliyun.com/pypi/simple"
 reference = "aliyun"
 
 [extras]
-all = ["lxml", "asyncclick"]
+all = ["lxml", "asyncclick", "colorama"]
+cli = ["asyncclick"]
+old = ["lxml", "requests", "click"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "83ffe689f7d64cf98461e571e4a588c070fa0b3e1f24c6e9c200002e85375eb7"
+content-hash = "537dea2cf192c49f3e2aaf52f529221c3be02465202d76c64eb296210d24cc52"
 
 [metadata.files]
 anyio = [
@@ -522,6 +537,10 @@ chardet = [
 click = [
     {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
     {file = "click-7.1.2.tar.gz", hash = "sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a"},
+]
+colorama = [
+    {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
+    {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 flake8 = [
     {file = "flake8-3.8.4-py2.py3-none-any.whl", hash = "sha256:749dbbd6bfd0cf1318af27bf97a14e28e5ff548ef8e5b1566ccfb25a11e7c839"},

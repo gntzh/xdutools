@@ -1,18 +1,18 @@
 import re
 from base64 import b64encode
 from secrets import token_urlsafe
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from bs4 import BeautifulSoup
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
+from httpx import AsyncClient
 
-from .utils import create_client
+from .types import ClientOrCookies, ClientOrCookiesT
+from .utils import ccn2flag, create_client, ccn2client
 
-if TYPE_CHECKING:
-    from httpx import AsyncClient
 
-    # TODO Client 和 CookiesLike 兼容参数
+# TODO Client 和 CookiesLike 兼容参数
 
 
 def encrypt(key: str, value: str) -> str:
@@ -21,46 +21,48 @@ def encrypt(key: str, value: str) -> str:
     return b64encode(cipher.encrypt(paddding)).decode()
 
 
-async def get_logged_in_user(client: "AsyncClient") -> Optional[str]:
-    res = await client.get("http://ids.xidian.edu.cn/authserver/userAttributesEdit.do")
-    if (
-        res.status_code == 200
-        and (m := re.search(r'userId=(?P<username>\d{11})"', res.text, re.S))
-        is not None
-    ):
-        return m.group("username")
-    return None
+async def get_logged_in_user(coc: ClientOrCookies) -> Optional[str]:
+    async with ccn2client(coc) as client:
+        res = await client.get(
+            "http://ids.xidian.edu.cn/authserver/userAttributesEdit.do"
+        )
+        if (
+            res.status_code == 200
+            and (m := re.search(r'userId=(?P<username>\d{11})"', res.text, re.S))
+            is not None
+        ):
+            return m.group("username")
+        return None
 
 
-async def get_key_and_hidden_fields(client: "AsyncClient" = None) -> tuple[str, dict]:
-    if client is None:
-        client = create_client()
-        flag = True
-    flag = False
+async def get_key_and_hidden_fields(con: AsyncClient = None) -> tuple[str, dict]:
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
         "Host": "ids.xidian.edu.cn",
         "Upgrade-Insecure-Requests": "1",
     }
-    res = await client.get("http://ids.xidian.edu.cn/authserver/login", headers=headers)
-    if flag:
-        await client.aclose()
-    if res.status_code == 200:
-        page = BeautifulSoup(res.text)
-        return page.select_one("#pwdDefaultEncryptSalt")["value"], {
-            el.get("name"): el.get("value")
-            for el in page.select("input[type='hidden'][name][value]:not([name=''])")
-        }
-    else:
-        raise Exception
+    async with ccn2client(con) as client:
+        res = await client.get(
+            "http://ids.xidian.edu.cn/authserver/login", headers=headers
+        )
+        if res.status_code == 200:
+            page = BeautifulSoup(res.text)
+            return page.select_one("#pwdDefaultEncryptSalt")["value"], {
+                el.get("name"): el.get("value")
+                for el in page.select(
+                    "input[type='hidden'][name][value]:not([name=''])"
+                )
+            }
+        else:
+            raise Exception
 
 
 async def log_in(
-    username: str, password: str, *, service: str = None, client: "AsyncClient" = None
-) -> "AsyncClient":
+    client: AsyncClient = None, *, username: str, password: str, service: str = None
+) -> AsyncClient:
     client = client or create_client()
     key, form_data = await get_key_and_hidden_fields(client)
-    form_data |= {
+    form_data |= {  # type: ignore[operator]
         "username": username,
         "password": encrypt(key, password),
         "rememberMe": "on",
@@ -77,9 +79,14 @@ async def log_in(
     raise Exception
 
 
-async def login_in_service(client: "AsyncClient", *, service: str) -> "AsyncClient":
-    await client.get(
-        "http://ids.xidian.edu.cn/authserver/login",
-        params={"service": service},
-    )
-    return client
+async def login_in_service(coc: ClientOrCookiesT, *, service: str) -> ClientOrCookiesT:
+    client = coc or create_client(cookies=coc)
+    async with ccn2flag(coc) as (client, is_client):
+        await client.get(
+            "http://ids.xidian.edu.cn/authserver/login",
+            params={"service": service},
+        )
+        if is_client:
+            return client  # type: ignore
+        else:
+            return client.cookies.jar  # type: ignore

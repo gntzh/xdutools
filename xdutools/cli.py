@@ -48,7 +48,7 @@ async def log_in_ids(ctx: Context) -> "AsyncClient":
         if u == username:
             return client
     password: str = ctx.obj.get("password") or click.prompt("密码")
-    await ids.log_in(username, password, client)
+    await ids.log_in(client, username=username, password=password)
     cookies.save_cookies_to_file(client.cookies, cookie_path)
     return client
 
@@ -70,7 +70,7 @@ async def log_in_ehall(ctx: Context) -> "AsyncClient":
                 ctx.obj["client"] = client
                 return client
     password: str = ctx.obj.get("password") or click.prompt("密码")
-    await ehall.log_in(username, password, client)
+    await ehall.log_in(client, username=username, password=password)
     ctx.obj["client"] = client
     return client
 
@@ -82,11 +82,10 @@ async def log_in_ehall(ctx: Context) -> "AsyncClient":
 @click.pass_context
 async def schedule(ctx: Context, format):
     client = await log_in_ehall(ctx)
-    await ehall.log_in_with_ids(client)
     from xdutools.auth.ehall import use_app
     from xdutools.apps.schedule import get_lessons, save_lessons_as_wake_up, E_HALL_ID
 
-    await use_app(client, E_HALL_ID)
+    await use_app(client, app_id=E_HALL_ID)
     save_lessons_as_wake_up(await get_lessons(client))
 
 

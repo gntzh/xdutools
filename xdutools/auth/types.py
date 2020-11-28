@@ -1,7 +1,6 @@
 from http.cookiejar import CookieJar
 from typing import TYPE_CHECKING, TypeVar, Union
 
-
 if TYPE_CHECKING:
     from httpx import AsyncClient
 

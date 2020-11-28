@@ -9,8 +9,7 @@ from Crypto.Util.Padding import pad
 from httpx import AsyncClient
 
 from .types import ClientOrCookies, ClientOrCookiesT
-from .utils import ccn2flag, create_client, ccn2client
-
+from .utils import ccn2client, ccn2flag, create_client
 
 # TODO Client 和 CookiesLike 兼容参数
 

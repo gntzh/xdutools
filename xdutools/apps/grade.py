@@ -1,6 +1,6 @@
 import json
-from typing import Iterable, List, TYPE_CHECKING, Union
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Iterable, List, Union
 
 if TYPE_CHECKING:
     from httpx import AsyncClient

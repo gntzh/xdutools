@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -38,12 +39,23 @@ class Lesson(object):
     def wake_up_record(self) -> dict[str, str]:  # python>=3.7保证字典有序
         return {
             "课程名称": self.course,
-            "星期": self.weekday_char,
+            "星期": str(self.weekday),
             "开始节数": str(self.start_lesson),
             "结束节数": str(self.end_lesson),
             "老师": self.teachers_str,
             "地点": self.place,
             "周数": "、".join(str(i) for i in self.weeks),
+        }
+
+    @property
+    def simple_record(self) -> dict[str, str]:  # python>=3.7保证字典有序
+        return {
+            "课程名字": self.course,
+            "教师名字": self.teachers_str,
+            "周几": self.weekday_char,
+            "节数": f"{self.start_lesson}-{self.end_lesson}",
+            "教室": self.place,
+            "周数": " ".join(str(i) for i in self.weeks),
         }
 
     @property
@@ -81,10 +93,15 @@ async def get_lessons(client: "AsyncClient") -> list[Lesson]:
     return [Lesson.by_data(i) for i in res.json()["datas"]["xsllsykb"]["rows"]]
 
 
-def save_lessons_as_wake_up(lessons: list[Lesson]):
+def save_lessons_as_wake_up(lessons: list[Lesson], path: Path = None):
     """保存为适合WakeUp课程表导入的格式(csv)
     课程名称,星期,开始节数,结束节数,老师,地点,周数
     """
-    with open("./schedule-WakeUpSchedule.csv", "w", encoding="utf-8") as fo:
+    with open(path or "./schedule-WakeUpSchedule.csv", "w", encoding="utf-8") as fo:
         fo.write("课程名称,星期,开始节数,结束节数,老师,地点,周数" + "\n")
         fo.writelines(",".join(i.wake_up_record.values()) + "\n" for i in lessons)
+
+
+def save_lessons_as_simple(lessons: list[Lesson], path: Path = None):
+    with open(path or "./schedule-SimpleSchedule.txt", "w", encoding="utf-8") as fo:
+        fo.writelines("，".join(i.simple_record.values()) + "\n" for i in lessons)

@@ -1,12 +1,13 @@
 from typing import Any
+
 import asyncclick as click
 from asyncclick.core import Context
-from xdutools.state import COOKIES_PATH, ensure_path
 from httpx import AsyncClient
 
-from xdutools.auth import ids, ehall
-from xdutools.auth import cookies
+from xdutools.apps.schedule import save_lessons_as_simple
+from xdutools.auth import cookies, ehall, ids
 from xdutools.auth.utils import create_client
+from xdutools.state import COOKIES_PATH, ensure_path
 
 ensure_path()
 click.anyio_backend = "asyncio"
@@ -85,16 +86,27 @@ async def log_in_ehall(ctx: Context) -> AsyncClient:
 
 @main.command()
 @click.option(
-    "--format", "-f", type=click.Choice(("simple", "csv", "wakeup")), default="csv"
+    "-f",
+    "--format",
+    "fmt",
+    type=click.Choice(("simple", "default", "wakeup")),
+    default="default",
 )
 @click.pass_context
-async def schedule(ctx: Context, format):
+async def schedule(ctx: Context, fmt: str):
     client = await log_in_ehall()
+    from xdutools.apps.schedule import (E_HALL_ID, get_lessons,
+                                        save_lessons_as_wake_up)
     from xdutools.auth.ehall import use_app
-    from xdutools.apps.schedule import get_lessons, save_lessons_as_wake_up, E_HALL_ID
 
     await use_app(client, app_id=E_HALL_ID)
-    save_lessons_as_wake_up(await get_lessons(client))
+    lessons = await get_lessons(client)
+    if fmt == "wakeup":
+        save_lessons_as_wake_up(lessons)
+    elif fmt == "simple":
+        save_lessons_as_simple(lessons)
+    else:
+        save_lessons_as_wake_up(lessons)
 
 
 if __name__ == "__main__":

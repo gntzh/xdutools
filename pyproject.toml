@@ -6,7 +6,7 @@ keywords = ["XDU", "Spider"]
 license = "MIT"
 name = "xdutools"
 repository = "https://github.com/shoorday/xdutools"
-version = "0.0.1-alpha.1"
+version = "0.0.1-alpha.2"
 
 [tool.poetry.dependencies]
 asyncclick = {version = "^7.1.2", optional = true}
@@ -43,3 +43,6 @@ requires = ["poetry-core>=1.0.0"]
 
 [tool.black]
 line-length = 88
+
+[tool.isort]
+line_length = 88

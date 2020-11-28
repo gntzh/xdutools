@@ -2,7 +2,6 @@ from http.cookiejar import MozillaCookieJar
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
-
 if TYPE_CHECKING:
     from httpx import Cookies
 

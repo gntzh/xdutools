@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from xdutools.utils import now
+
 if TYPE_CHECKING:
     from httpx import AsyncClient
 
@@ -89,7 +91,14 @@ class Lesson(object):
 
 
 async def get_lessons(client: "AsyncClient") -> list[Lesson]:
-    res = await client.post(LESSONS_URL, data={"XNXQDM": "2020-2021-1"})
+    date = now()
+    if date.month <= 2:
+        term = f"{date.year -1 }-{date.year}-1"
+    elif date.month >= 8:
+        term = f"{date.year}-{date.year + 1}-1"
+    else:
+        term = f"{date.year -1 }-{date.year}-2"
+    res = await client.post(LESSONS_URL, data={"XNXQDM": term})
     return [Lesson.by_data(i) for i in res.json()["datas"]["xsllsykb"]["rows"]]
 
 

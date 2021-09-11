@@ -1,4 +1,3 @@
-import re
 from base64 import b64encode
 from secrets import token_urlsafe
 from typing import Optional
@@ -23,14 +22,10 @@ def encrypt(key: str, value: str) -> str:
 async def get_logged_in_user(coc: ClientOrCookies) -> Optional[str]:
     async with ccn2client(coc) as client:
         res = await client.get(
-            "http://ids.xidian.edu.cn/authserver/userAttributesEdit.do"
+            "https://ids.xidian.edu.cn/personalInfo/common/getUserConf"
         )
-        if (
-            res.status_code == 200
-            and (m := re.search(r'userId=(?P<username>\d{11})"', res.text, re.S))
-            is not None
-        ):
-            return m.group("username")
+        if res.status_code == 200 and (data := res.json()).get("code") == "0":
+            return data["datas"]["uid"]
         return None
 
 
@@ -42,14 +37,16 @@ async def get_key_and_hidden_fields(con: AsyncClient = None) -> tuple[str, dict]
     }
     async with ccn2client(con) as client:
         res = await client.get(
-            "http://ids.xidian.edu.cn/authserver/login", headers=headers
+            "http://ids.xidian.edu.cn/authserver/login",
+            params={"type": "userNameLogin"},
+            headers=headers,
         )
         if res.status_code == 200:
             page = BeautifulSoup(res.text)
-            return page.select_one("#pwdDefaultEncryptSalt")["value"], {
+            return page.select_one("#pwdEncryptSalt")["value"], {
                 el.get("name"): el.get("value")
                 for el in page.select(
-                    "input[type='hidden'][name][value]:not([name=''])"
+                    ".loginFromClass input[type='hidden'][name][value]:not([name=''])"
                 )
             }
         else:
@@ -77,12 +74,12 @@ async def log_in(
     form_data |= {  # type: ignore[operator]
         "username": username,
         "password": encrypt(key, password),
-        # "rememberMe": "on",
+        "rememberMe": "on",
     }
     res = await client.post(
         "http://ids.xidian.edu.cn/authserver/login",
         data=form_data,
-        # params={"service": service},
+        params={"service": service},
     )
     # FIXME post 重定向到了
     # ids.xidian.edu.cn/authserver/services/j_spring_cas_security_check

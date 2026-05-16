@@ -22,7 +22,8 @@ def encrypt(key: str, value: str) -> str:
 async def get_logged_in_user(coc: ClientOrCookies) -> Optional[str]:
     async with ccn2client(coc) as client:
         res = await client.get(
-            "https://ids.xidian.edu.cn/personalInfo/common/getUserConf"
+            "https://ids.xidian.edu.cn/personalInfo/common/getUserConf",
+            allow_redirects=False,
         )
         if res.status_code == 200 and (data := res.json()).get("code") == "0":
             return data["datas"]["uid"]

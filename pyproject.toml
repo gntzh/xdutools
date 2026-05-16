@@ -1,11 +1,11 @@
 [tool.poetry]
-authors = ["shoor <shoorday@gmail.com>"]
+authors = ["Grant Zhang <grant@gntzh.com>"]
 description = "西电相关工具和 CLI"
-homepage = "https://github.com/shoorday/xdutools"
+homepage = "https://github.com/gntzh/xdutools"
 keywords = ["XDU", "Spider"]
 license = "MIT"
 name = "xdutools"
-repository = "https://github.com/shoorday/xdutools"
+repository = "https://github.com/gntzh/xdutools"
 version = "0.0.1-alpha.3"
 
 [tool.poetry.dependencies]
